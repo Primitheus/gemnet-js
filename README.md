@@ -16,6 +16,10 @@ I still wonder why I need your email to gift items... ;) No seriously that's not
 What is the goal of this? </br>
 To be honest, it's mostly for education. Reverse Engineering is a hobby of mine and Rumble Fighter was once a very huge interest, so, why not combine the two and mess with it. The end game would be to create a Packet Editor or even a Private Server for newer and older versions of the game purely for education and a bit of fun without any intention of monetization. 
 
+<strong>Gemnet.exe</strong> </br>
+This is a VERY early build of a theoretical Private Server. To use you have to reroute the Rumble Fighter IP back to your localhost (127.0.0.1), if you can't do this you're probably not going to benefit or understand this repo. It will crash upon trying to go to 
+Lobby, My Info, Training, etc as I have yet to implement them and currently too lazy. But it will fully launch the game.
+Source code of Gemnet.exe has been partically lost, the barebones of the source code still exists, but I won't share that until it is more practical and cleaner.
 
 
 
