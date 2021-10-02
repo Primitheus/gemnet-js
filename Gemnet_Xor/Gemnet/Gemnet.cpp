@@ -45,8 +45,6 @@ int main(void)
     int iSendResult;
     char recvbuf[DEFAULT_BUFLEN];
     int recvbuflen = DEFAULT_BUFLEN;
-    
-    int index = 0;
 
     // Initialize Winsock
     iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -114,7 +112,7 @@ int main(void)
     do {
 
         iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-        if (iResult == 26 and index == 0) {
+        if (iResult == 26) {
             printf("Bytes received: %d\n", iResult);
 
             // Echo the buffer back to the sender
@@ -125,7 +123,6 @@ int main(void)
             //printf("Encrypted:%s\n\n\n", encrypted);
 
             iSendResult = send(ClientSocket, send1, 6, 0);
-            index++;
             if (iSendResult == SOCKET_ERROR) {
                 printf("send failed with error: %d\n", WSAGetLastError());
                 closesocket(ClientSocket);
@@ -134,37 +131,6 @@ int main(void)
             }
             printf("Bytes sent: %d\n", iSendResult);
         }
-
-        else if (iResult == 91 and index == 1)
-        {
-        printf("Bytes received: %d\n", iResult);
-
-        iSendResult = send(ClientSocket, login_success, 326, 0);
-        index++;
-        printf("Bytes sent: %d\n", iSendResult);
-
-        }
-
-        else if (iResult == 6 and index == 2)
-        {
-            printf("Bytes received: %d\n", iResult);
-
-            iSendResult = send(ClientSocket, login_1, 14, 0);
-            index++;
-            printf("Bytes sent: %d\n", iSendResult);
-
-        }
-        else if (iResult == 6 and index == 3)
-        {
-            printf("Bytes received: %d\n", iResult);
-
-            iSendResult = send(ClientSocket, login_2, 76, 0);
-            index++;
-            printf("Bytes sent: %d\n", iSendResult);
-
-        }
-
-
         else if (iResult == 0)
             printf("Connection closing...\n");
         else {
