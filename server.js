@@ -1,7 +1,33 @@
 const net = require('net');
+var mysql = require('mysql');
+
 //var Enum = require('enum');
 const PORT = 7000;
 const loginlib = require("./login.js");
+const inventorylib = require("./inventory.js")
+
+var carats;
+var astros;
+var uuid;
+var userign;
+var GUID;
+var token;
+var forum_name;
+
+let connection = mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'toor',
+    database: 'rumblefighter'
+  });
+
+  connection.connect(function(err) {
+    if (err) {
+      return console.error('error: ' + err.message);
+    }
+  
+    console.log('Connected to the MySQL server.');
+  });
 
 //var HEADERTYPE = new Enum({'LOGIN': 0x10, 'QUERY': 0x40, 'GENERAL': 0x30, "INVENTORY": 0x31, "GAMEGUARD": 0x48}, )
 var HEADER = { 
@@ -81,40 +107,167 @@ const server = net.createServer((socket) => {
     console.log("Packet Action: " + action);
 
     if (type == HEADER.TYPE.LOGIN && action == HEADER.ACTION.VERSION_CHECK ) {
-      
                        
-        /*const response = Buffer.from("");
-        const responsePacketLength = response.length + 6;
-        console.log("Packet Length: " + plength);
-        socket.write(Buffer.concat([
-          Buffer.from([(type >> 8) & 0xff, type & 0xff]),
-          Buffer.from([(responsePacketLength >> 8) & 0xff, responsePacketLength & 0xff]),
-          Buffer.from([(action+1 >> 8) & 0xff, action+1 & 0xff]),
-          response
-        ]));  */
 
-        console.log("VERSION CHECK");
-        const response = loginlib.version_check();
-        write(response);
+      bconsole.log("VERSION CHECK");
+      const response = loginlib.version_check();
+      write(response);
 
+    }
+
+    if (type == HEADER.TYPE.LOGIN && action == HEADER.ACTION.CRED_CHECK) {
+        //const response = loginlib.credential_check();
+
+      console.log("Credential Check");
+
+      var email_array = [];
+      var password_array = [];
+
+      for (var i = 0, k = 0; body[i] != 0;  i++, k++)
+      {
+        email_array[k] = body[i] 
       }
 
-      if (type == HEADER.TYPE.LOGIN && action == HEADER.ACTION.CRED_CHECK) {
-        const response = loginlib.credential_check();
+      for (var i = 64, k = 0; body[i] != 0;  i++, k++)
+      {
+        password_array[k] = body[i] 
+      }
         
-        console.log("CRED CHECK");
-        write(response);
+      email = String.fromCharCode.apply(null, email_array);
+      password = String.fromCharCode.apply(null, password_array);
 
+      console.log(email, password);
+
+      const response = Buffer.alloc(320, 0);
+      const type = 0x10;
+      const plength = response.length + 6;
+      const action = HEADER.ACTION.CRED_CHECK;
+    
+      connection.query("SELECT * FROM accounts WHERE email=? AND password=?", [email, password], function (err, result, fields) {
+        if (err) throw err;
+          if (result.length > 0)
+          {
+            if (result[0].has_character == 1)
+            {
+              console.log(result[0].email);
+              console.log("Login Successful");
+              uuid = result[0].uuid;
+              carats = result[0].carats;
+              astros = result[0].astros;
+              userign = result[0].ign;
+              GUID = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX";
+              token = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234";
+              forum_name = result[0].forum_name;
+    
+              response.writeUint32LE(uuid, 0);
+              response.write(userign, 4);
+              response.writeUint32LE(carats, 32);
+              response.write(GUID, 90);
+              response.write(token, 191);
+              response.write(forum_name, 256);
+              
+              //byteUsername = ascii_to_hex(userign);
+              
+              var buffer = Buffer.concat([
+                Buffer.from([(type >> 8) & 0xff, type & 0xff]),
+                Buffer.from([(plength >> 8) & 0xff, plength & 0xff]),
+                Buffer.from([(action+1) & 0xff, (action+1) >> 8]),
+                response
+
+
+            ])
+
+            write(buffer);
+    
+          } else {
+            console.log("Login Successful, No Character")
+
+            const response = Buffer.alloc(520, 0);
+            const type = 528;
+            const action = HEADER.ACTION.CRED_CHECK;
+
+
+            
+            var buffer = Buffer.concat([
+              Buffer.from([(type >> 8) & 0xff, type & 0xff]),
+              Buffer.from([(plength >> 8) & 0xff, plength & 0xff]),
+              Buffer.from([(action+1) & 0xff, (action+1) >> 8]),
+              response
+
+            ])
+
+
+          }  
+ 
+          } else {
+            console.log("User doesn't exist");
+
+            const response = Buffer.alloc(514, 0);
+            const type = 528;
+            const plength = response.length + 6;
+            const action = 0xbe0285 - 1;
+            //const temp = 0x02be;
+
+            response.write("¾Please check your Email or Password and try again.")
+
+            var buffer = Buffer.concat([
+              Buffer.from([(type >> 8) & 0xff, type & 0xff]),
+              Buffer.from([(plength >> 8) & 0xff, plength & 0xff]),
+              Buffer.from([(action+1) & 0xff, (action+1) >> 8]),
+              //Buffer.from([(temp >> 8) &0xff, temp & 0xff]),
+              response
+
+            ])
+
+            write(buffer);
+
+          }
+                      
+          //const response = loginlib.credential_check(email, password);
+         
+    
+          })
+    
       }
 
-      if (type == HEADER.TYPE.LOGIN && action == HEADER.ACTION.SERVER_TIME) {
-        const response = loginlib.server_time();
+
+    if (type == HEADER.TYPE.LOGIN && action == HEADER.ACTION.SERVER_TIME) {
+      const response = loginlib.server_time();
         
-        console.log("SERVER TIME");
-        write(response)
-      }
+      console.log("SERVER TIME");
+      write(response)
+    }
 
-    });
+    if (type == HEADER.TYPE.GENERAL && action == HEADER.ACTION.BUYING) {
+      const response = inventorylib.buy();
+      
+      console.log("BUYING");
+      write(response);
+    }
+
+    if (type == HEADER.TYPE.GENERAL && action == HEADER.ACTION.EQUIP_ITEM) {
+      const response = inventorylib.equip();
+      
+      console.log("Equip");
+      write(response);
+
+    }
+
+    if (type == HEADER.TYPE.INVENTORY && action == HEADER.ACTION.CASH) {
+      const response = inventorylib.cash(uuid);
+
+      console.log("Cash");
+      write(response);
+    }
+
+    if (type == HEADER.TYPE.INVENTORY && action == HEADER.ACTION.BUY_ITEM) {
+      const response = inventorylib.buy_item();
+
+      console.log("Buying Item");
+      write(response);
+    }
+    
+  });
 
   socket.on('error', err => {
     console.log('[Client Encountered an Error]');
@@ -132,9 +285,33 @@ socket.write(Buffer.concat([
 }
 
 });
+
+function ascii_to_hex(str)
+  {
+	var arr1 = [];
+	for (var n = 0, l = str.length; n < l; n ++) 
+     {
+		var hex = Number(str.charCodeAt(n)).toString(16);
+		arr1.push(hex);
+	 }
+	return arr1.join('');
+   }
+
+   function hexToBytes(hex) {
+    for (var bytes = [], c = 0; c < hex.length; c += 2)
+        {
+
+            bytes.push(parseInt(hex.substr(c, 2), 16));
+        }
+            return bytes;
+}
+
+
   
 server.listen(PORT, () => {
   console.log('Server Started on Port: ' + PORT);
 });
+
+
 
 
