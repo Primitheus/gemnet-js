@@ -13,7 +13,7 @@ var forum_name;
 let connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '***REMOVED***',
+    password: '',
     database: 'rumblefighter'
   });
   

@@ -10,7 +10,7 @@ const serveract = chalk.cyan;
 let connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '***REMOVED***',
+    password: '',
     database: 'rumblefighter'
   });
   
